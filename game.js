@@ -1,6 +1,12 @@
 import { db } from "./firebase.js";
-import { ref, set, onValue, update, get }
-from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
+import {
+  ref,
+  set,
+  onValue,
+  update,
+  get,
+  remove
+} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
 
 /* ===== ELEMENT ===== */
 const home = document.getElementById("home");
@@ -14,6 +20,10 @@ const leaderboardEl = document.getElementById("leaderboard");
 const nameInput = document.getElementById("playerNameInput");
 const roomNameInput = document.getElementById("roomNameInput");
 const roomCodeInput = document.getElementById("roomCodeInput");
+
+const startBtn = document.getElementById("startGameBtn");
+const resetBtn = document.getElementById("resetGameBtn");
+const exitBtn = document.getElementById("exitGameBtn");
 
 /* ===== STATE ===== */
 const playerId = "p" + Math.floor(Math.random() * 99999);
@@ -42,7 +52,7 @@ async function savePlayer() {
   const pRef = ref(db, `players/${playerId}`);
   const snap = await get(pRef);
   if (!snap.exists()) {
-    set(pRef, { name: playerName, win: 0, score: 0 });
+    await set(pRef, { name: playerName, win: 0, score: 0 });
   }
 }
 
@@ -89,20 +99,25 @@ confirmBtn.onclick = async () => {
   if (action === "joinSpectator") joinRoom("spectator");
 };
 
-/* ===== JOIN ===== */
+/* ===== JOIN ROOM ===== */
 async function joinRoom(type) {
   roomCode = roomCodeInput.value.toUpperCase();
+  if (!roomCode) return alert("Isi kode room!");
+
   const roomRef = ref(db, `rooms/${roomCode}`);
   const snap = await get(roomRef);
-  if (!snap.exists()) return alert("Room tidak ada!");
+  if (!snap.exists()) return alert("Room tidak ditemukan!");
 
   const d = snap.val();
 
-  if (type === "spectator") role = "spectator";
-  else if (!d.players.O) {
+  if (type === "spectator") {
+    role = "spectator";
+  } else if (!d.players.O) {
     role = "O";
-    update(roomRef, { "players/O": playerId });
-  } else role = "spectator";
+    await update(roomRef, { "players/O": playerId });
+  } else {
+    role = "spectator";
+  }
 
   listen();
 }
@@ -121,24 +136,50 @@ function listen() {
     roleInfo.innerText =
       role === "spectator" ? "👀 Spectator" : `🎮 Player ${role}`;
 
-    d.board.forEach((v, i) => (cells[i].innerText = v));
+    // BOARD
+    d.board.forEach((v, i) => {
+      cells[i].innerText = v;
+      cells[i].classList.toggle(
+        "clickable",
+        d.started &&
+        role !== "spectator" &&
+        d.turn === role &&
+        v === ""
+      );
+    });
 
-    if (d.host === playerId) hostPanel.style.display = "block";
+    // HOST PANEL + BUTTON STATE
+    if (d.host === playerId) {
+      hostPanel.style.display = "block";
+
+      if (d.started) {
+        startBtn.style.display = "none";
+        resetBtn.style.display = "inline-block";
+        exitBtn.style.display = "inline-block";
+      } else {
+        startBtn.style.display = "inline-block";
+        resetBtn.style.display = "none";
+        exitBtn.style.display = "none";
+      }
+    } else {
+      hostPanel.style.display = "none";
+    }
   });
 }
 
-/* ===== START ===== */
-startGameBtn.onclick = () => {
+/* ===== START GAME ===== */
+startBtn.onclick = () => {
   update(ref(db, `rooms/${roomCode}`), { started: true });
 };
 
+/* ===== MOVE ===== */
 function move(i) {
   if (role === "spectator") return;
 
   const roomRef = ref(db, `rooms/${roomCode}`);
   onValue(roomRef, async snap => {
     const d = snap.val();
-    if (!d.started || d.turn !== role || d.board[i]) return;
+    if (!d || !d.started || d.turn !== role || d.board[i]) return;
 
     d.board[i] = role;
     const winner = checkWinner(d.board);
@@ -151,13 +192,46 @@ function move(i) {
       d.turn = role === "X" ? "O" : "X";
     }
 
-    update(roomRef, {
+    await update(roomRef, {
       board: d.board,
       turn: d.turn,
       started: d.started
     });
   }, { onlyOnce: true });
 }
+
+/* ===== RESET ===== */
+resetBtn.onclick = () => {
+  if (!isHost) return;
+
+  update(ref(db, `rooms/${roomCode}`), {
+    started: false,
+    turn: "X",
+    board: Array(9).fill("")
+  });
+};
+
+/* ===== EXIT ===== */
+exitBtn.onclick = async () => {
+  if (!roomCode) return;
+
+  if (isHost) {
+    await remove(ref(db, `rooms/${roomCode}`));
+  } else if (role === "spectator") {
+    await remove(ref(db, `rooms/${roomCode}/spectators/${playerId}`));
+  } else {
+    await remove(ref(db, `rooms/${roomCode}/players/${role}`));
+  }
+
+  roomCode = "";
+  role = "";
+  isHost = false;
+
+  boardEl.style.display = "none";
+  hostPanel.style.display = "none";
+  document.getElementById("gameInfo").style.display = "none";
+  home.style.display = "block";
+};
 
 /* ===== LEADERBOARD ===== */
 onValue(ref(db, "players"), snap => {
@@ -166,10 +240,10 @@ onValue(ref(db, "players"), snap => {
 
   Object.values(snap.val())
     .sort((a, b) => b.score - a.score)
-    .slice(0, 10)
-    .forEach(p => {
+    .slice(0, 5)
+    .forEach((p, i) => {
       const li = document.createElement("li");
-      li.textContent = `${p.name} | 🏆 ${p.win} | ⭐ ${p.score}`;
+      li.textContent = `${i + 1}. ${p.name} | 🏆 ${p.win} | ⭐ ${p.score}`;
       leaderboardEl.appendChild(li);
     });
 });
@@ -191,12 +265,11 @@ function checkWinner(board) {
 }
 
 /* ===== ADD SCORE ===== */
-async function addWin(playerSymbol) {
-  const roomRef = ref(db, `rooms/${roomCode}`);
-  const snap = await get(roomRef);
-  if (!snap.exists()) return;
+async function addWin(symbol) {
+  const roomSnap = await get(ref(db, `rooms/${roomCode}`));
+  if (!roomSnap.exists()) return;
 
-  const winnerId = snap.val().players[playerSymbol];
+  const winnerId = roomSnap.val().players[symbol];
   if (!winnerId) return;
 
   const pRef = ref(db, `players/${winnerId}`);
@@ -204,7 +277,7 @@ async function addWin(playerSymbol) {
   if (!ps.exists()) return;
 
   const d = ps.val();
-  update(pRef, {
+  await update(pRef, {
     win: d.win + 1,
     score: d.score + 10
   });
