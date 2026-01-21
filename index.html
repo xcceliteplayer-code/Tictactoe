@@ -1,31 +1,55 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Tic Tac Toe Multiplayer</title>
+  <title>TicTac Toe Multiplayer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
+
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="game.js" defer></script>
 </head>
 <body>
 
 <h2>❌⭕ Tic Tac Toe Multiplayer</h2>
 
-<div id="lobby">
-  <input id="roomInput" placeholder="Nama Room">
+<!-- ===== HOME ===== -->
+<div id="home">
+  <input id="playerNameInput" placeholder="Nama kamu">
   <br><br>
 
   <button id="createRoomBtn">🆕 Create Room</button>
+  <br><br>
   <button id="joinPlayerBtn">🎮 Join as Player</button>
+  <br><br>
   <button id="joinSpectatorBtn">👀 Join as Spectator</button>
+
+  <hr>
+  <h3>🏆 Leaderboard</h3>
+  <ul id="leaderboard"></ul>
 </div>
 
-<h3 id="info"></h3>
-<p id="roleInfo"></p>
+<!-- ===== INPUT ===== -->
+<div id="roomInputBox" style="display:none">
+  <input id="roomNameInput" placeholder="Nama Room" style="display:none">
+  <input id="roomCodeInput" placeholder="Room Code" style="display:none">
+  <br><br>
+  <button id="confirmBtn">Confirm</button>
+</div>
 
-<div id="board" class="board"></div>
+<!-- ===== INFO ===== -->
+<div id="gameInfo" style="display:none">
+  <h3 id="info"></h3>
+  <p id="roleInfo"></p>
+</div>
 
-<button id="resetBtn" style="display:none">Reset Game</button>
+<!-- ===== HOST ===== -->
+<div id="hostPanel" style="display:none">
+  <button id="startGameBtn">▶️ Start Game</button>
+</div>
 
-<script type="module" src="firebase.js"></script>
-<script type="module" src="game.js"></script>
+<!-- ===== BOARD ===== -->
+<div id="board" class="board" style="display:none"></div>
+
 </body>
 </html>
