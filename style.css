@@ -1,32 +1,97 @@
 body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg,#1e3c72,#2a5298);
+  color: #fff;
   text-align: center;
-  font-family: Arial;
-  background: #f4f4f4;
+  margin: 0;
+  padding: 20px;
+}
+
+h2 {
+  margin-bottom: 10px;
+}
+
+input {
+  padding: 10px;
+  width: 220px;
+  border-radius: 8px;
+  margin: 10px auto;
+  border: none;
+  outline: none;
+  text-align: center;
+
+  display: block;
+  margin: 0 auto;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #ffcc00;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+button:hover {
+  background: #ffd633;
+  transform: scale(1.05);
+}
+
+#home, #roomInputBox, #hostPanel {
+  background: rgba(0,0,0,0.3);
+  padding: 20px;
+  border-radius: 15px;
+  max-width: 300px;
+  margin: 20px auto;
+}
+
+hr {
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+#leaderboard {
+  list-style: none;
+  padding: 0;
+}
+
+#leaderboard li {
+  background: rgba(255,255,255,0.2);
+  margin: 5px;
+  padding: 8px;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
 .board {
-  width: 300px;
-  margin: 20px auto;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
+  grid-template-columns: repeat(3, 100px);
+  gap: 10px;
+  justify-content: center;
+  margin: 20px auto;
 }
 
 .cell {
   width: 100px;
   height: 100px;
-  background: white;
-  border: 2px solid black;
-  font-size: 60px;
+  background: rgba(255,255,255,0.9);
+  color: #000;
+  font-size: 48px;
+  font-weight: bold;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.cell.clickable {
+  border-radius: 15px;
   cursor: pointer;
+  transition: 0.2s;
 }
 
-.cell.clickable:hover {
-  background: #eee;
+.cell:hover {
+  background: #ffcc00;
+}
+
+#gameInfo {
+  margin-top: 10px;
 }
