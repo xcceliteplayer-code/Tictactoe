@@ -21,12 +21,14 @@ for (let i = 0; i < 9; i++) {
   cells.push(div);
 }
 
-/* ===== JOIN AS PLAYER ===== */
+document.getElementById("createRoomBtn").onclick = () => {
+  createRoom();
+};
+
 document.getElementById("joinPlayerBtn").onclick = () => {
   joinRoom("player");
 };
 
-/* ===== JOIN AS SPECTATOR ===== */
 document.getElementById("joinSpectatorBtn").onclick = () => {
   joinRoom("spectator");
 };
@@ -173,3 +175,22 @@ window.addEventListener("beforeunload", () => {
     remove(ref(db, `rooms/${room}/players/${role}`));
   }
 });
+
+function createRoom() {
+  room = document.getElementById("roomInput").value;
+  if (!room) return alert("Isi nama room!");
+
+  document.getElementById("lobby").style.display = "none";
+
+  const roomRef = ref(db, `rooms/${room}`);
+
+  set(roomRef, {
+    board: Array(9).fill(""),
+    turn: "X",
+    players: { X: playerId },
+    spectators: {}
+  });
+
+  role = "X";
+  listenRoom();
+}
