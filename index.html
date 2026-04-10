@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Image Generator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      width: 400px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+    }
+    input, select {
+      background: #334155;
+      color: white;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2563eb;
+    }
+    img {
+      margin-top: 15px;
+      max-width: 100%;
+      border-radius: 10px;
+      min-height: 200px;
+      object-fit: cover;
+    }
+    .download-btn {
+      background: #22c55e;
+      display: none;
+    }
+    .download-btn:hover {
+      background: #16a34a;
+    }
+    .error {
+      color: #f87171;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>AI Image Generator</h2>
+
+    <input type="text" id="prompt" placeholder="Masukkan teks (contoh: cat)" />
+
+    <select id="style">
+      <option value="">Default</option>
+      <option value="anime style">Anime</option>
+      <option value="realistic">Realistic</option>
+      <option value="cyberpunk">Cyberpunk</option>
+      <option value="fantasy">Fantasy</option>
+      <option value="pixel art">Pixel Art</option>
+    </select>
+
+    <button onclick="generateImage()">Generate</button>
+
+    <img id="result" alt="Hasil gambar" />
+
+    <div id="error" class="error"></div>
+
+    <button id="downloadBtn" class="download-btn" onclick="downloadImage()">Download Gambar</button>
+  </div>
+
+  <script>
+    let currentImageUrl = "";
+
+    function generateImage() {
+      const promptInput = document.getElementById('prompt').value;
+      const style = document.getElementById('style').value;
+      const img = document.getElementById('result');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const errorDiv = document.getElementById('error');
+
+      errorDiv.textContent = "";
+
+      if (!promptInput) {
+        errorDiv.textContent = 'Masukkan teks dulu!';
+        return;
+      }
+
+      const finalPrompt = style ? `${promptInput}, ${style}` : promptInput;
+
+      // SOLUSI: jangan pakai fetch (kena CORS di browser lokal)
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(finalPrompt)}?seed=${Date.now()}`;
+
+      img.src = url;
+      currentImageUrl = url;
+
+      img.onload = () => {
+        downloadBtn.style.display = 'block';
+      };
+
+      img.onerror = () => {
+        errorDiv.textContent = 'Gagal load gambar (API diblokir / internet / CORS). Coba lagi atau pakai VPN.';
+        downloadBtn.style.display = 'none';
+      };
+    }
+
+    function downloadImage() {
+      if (!currentImageUrl) return;
+
+      const a = document.createElement('a');
+      a.href = currentImageUrl;
+      a.download = 'ai-image.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // TEST sederhana (debug)
+    console.log("AI Image Generator Ready");
+  </script>
+</body>
+</html>
